@@ -31,8 +31,8 @@ public:
   ///* predicted sigma points matrix
   MatrixXd Xsig_pred_;
 
-  ///* time when the state is true, in us
-  long long time_us_;
+  ///* timestamp when the previous sample was taken
+  long long previous_timestamp_;
 
   ///* Process noise standard deviation longitudinal acceleration in m/s^2
   double std_a_;
@@ -102,6 +102,14 @@ public:
    * @param meas_package The measurement at k+1
    */
   void UpdateRadar(MeasurementPackage meas_package);
+private:
+  void GenerateSigmaPoints(MatrixXd* Xsig_aug_out);
+  void PredictSigmaPoints(MatrixXd Xsig_aug, double delta_t);
+  void PredictMeanCoverance();
+  void PredictLaserMeasurement(MatrixXd *Zsig_out, VectorXd *z_pred_out, MatrixXd *S_out);
+  void UpdateLaserState(MatrixXd Zsig, VectorXd z_pred, MatrixXd S, MeasurementPackage meas_package);
+  void PredictRadarMeasurement(MatrixXd *Zsig_out, VectorXd *z_pred_out, MatrixXd *S_out);
+  void UpdateRadarState(MatrixXd Zsig, VectorXd z_pred, MatrixXd S, MeasurementPackage meas_package);
 };
 
 #endif /* UKF_H */
