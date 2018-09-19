@@ -25,10 +25,10 @@ UKF::UKF() {
   P_ = MatrixXd(5, 5);
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 2;
+  std_a_ = 0.2;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 2;
+  std_yawdd_ = 0.4;
   
   //DO NOT MODIFY measurement noise values below these are provided by the sensor manufacturer.
   // Laser measurement noise standard deviation position1 in m
@@ -66,17 +66,42 @@ UKF::UKF() {
 
   x_ << 1, 1, 0, 0, 0;
 
-  P_ << 0.0043, -0.0013, 0.0030, -0.0022, -0.0020,
-    -0.0013, 0.0077, 0.0011, 0.0071, 0.0060,
-    0.0030, 0.0011, 0.0054, 0.0007, 0.0008,
-    -0.0022, 0.0071, 0.0007, 0.0098, 0.0100,
-    -0.0020, 0.0060, 0.0008, 0.0100, 0.0123;
+  P_ << 1, 0, 0, 0, 0,
+        0, 1, 0, 0, 0,
+        0, 0, 1, 0, 0,
+        0, 0, 0, 1, 0,
+        0, 0, 0, 0, 1;
 
 
   is_initialized_ = false;
+
+  // open file to write NIS
+  NIS_laser_f.open("nis_laser.dat", std::ofstream::out);
+  NIS_radar_f.open("nis_radar.dat", std::ofstream::out);
+
+  if (!NIS_laser_f.is_open()) {
+    cout << "Error Open nis_laser.dat file" << endl;
+  }
+  else {
+    NIS_laser_f.close();
+  }
+
+  if (!NIS_radar_f.is_open()) {
+    cout << "Error Open nis_radar.dat file" << endl;
+  }
+  else {
+    NIS_radar_f.close();
+  }
 }
 
-UKF::~UKF() {}
+UKF::~UKF() {
+  if (!NIS_laser_f.is_open()) {
+    NIS_laser_f.close();
+  }
+  if (!NIS_radar_f.is_open()) {
+    NIS_radar_f.close();
+  }
+}
 
 /**
  * @param {MeasurementPackage} meas_package The latest measurement data of
@@ -347,6 +372,15 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
 
   // Update the state
   UpdateLaserState(Zsig, z_pred, S, meas_package);
+
+  // Calculate NIS
+  VectorXd z = meas_package.raw_measurements_;
+  double nis = (z - z_pred).transpose() * S.inverse() * (z - z_pred);
+  NIS_laser_f.open("nis_laser.dat", std::ofstream::out | std::ofstream::app);
+  if (NIS_laser_f.is_open()) {
+    NIS_laser_f << nis << endl;
+    NIS_laser_f.close();
+  }
 }
 
 void UKF::PredictRadarMeasurement(MatrixXd *Zsig_out, VectorXd *z_pred_out, MatrixXd *S_out) {
@@ -467,4 +501,15 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
 
   // Update the state
   UpdateRadarState(Zsig, z_pred, S, meas_package);
+
+  // Calculate NIS
+  VectorXd z = meas_package.raw_measurements_;
+  double nis = (z - z_pred).transpose() * S.inverse() * (z - z_pred);
+
+  NIS_radar_f.open("nis_radar.dat", std::ofstream::out | std::ofstream::app);
+  if (NIS_radar_f.is_open()) {
+    NIS_radar_f << nis << endl;
+    NIS_radar_f.close();
+  }
 }
+

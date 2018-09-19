@@ -68,6 +68,10 @@ public:
   double lambda_;
 
 
+  // Output filestreams for radar and laser NIS
+  std::ofstream NIS_radar_f;
+  std::ofstream NIS_laser_f;
+
   /**
    * Constructor
    */
