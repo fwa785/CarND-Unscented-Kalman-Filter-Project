@@ -25,7 +25,7 @@ UKF::UKF() {
   P_ = MatrixXd(5, 5);
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 0.2;
+  std_a_ = 0.25;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
   std_yawdd_ = 0.4;
@@ -227,10 +227,7 @@ void UKF::PredictSigmaPoints(MatrixXd Xsig_aug, double delta_t) {
 
 void UKF::PredictMeanCoverance() {
   //predicted state mean
-  x_.fill(0.0);
-  for (int i = 0; i < 2 * n_aug_ + 1; i++) {  //iterate over sigma points
-    x_ = x_ + weights_(i) * Xsig_pred_.col(i);
-  }
+  x_ = Xsig_pred_ * weights_;
 
   //predicted state covariance matrix
   P_.fill(0.0);
@@ -293,10 +290,7 @@ void UKF::PredictLaserMeasurement(MatrixXd *Zsig_out, VectorXd *z_pred_out, Matr
   }
 
   //mean predicted measurement
-  z_pred.fill(0.0);
-  for (int i = 0; i < 2 * n_aug_ + 1; i++) {
-    z_pred = z_pred + weights_(i) * Zsig.col(i);
-  }
+  z_pred = Zsig * weights_;
 
   //innovation covariance matrix S
   S.fill(0.0);
@@ -413,10 +407,7 @@ void UKF::PredictRadarMeasurement(MatrixXd *Zsig_out, VectorXd *z_pred_out, Matr
  }
 
   //mean predicted measurement
-  z_pred.fill(0.0);
-  for (int i = 0; i < 2 * n_aug_ + 1; i++) {
-    z_pred = z_pred + weights_(i) * Zsig.col(i);
-  }
+  z_pred = Zsig * weights_;
 
   //innovation covariance matrix S
   S.fill(0.0);
